@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Gmail Account Creator - Educational Project
-Optimized for GitHub Actions
+Optimized for GitHub Actions with Selenium Manager
 """
 
 import os
@@ -15,6 +15,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 # Setup logging
@@ -34,30 +36,37 @@ class GmailCreator:
         self.setup_driver()
         
     def setup_driver(self):
-        """Setup Chrome driver for GitHub Actions"""
+        """Setup Chrome driver using Selenium Manager"""
         chrome_options = Options()
         
-        # Options for headless environment
-        chrome_options.add_argument("--headless")
+        # Options for GitHub Actions environment
+        chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
-        chrome_options.add_argument("--remote-debugging-port=9222")
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
         
         # Set user agent
-        chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
         
         try:
+            # Use Selenium Manager (automatic driver management)
             self.driver = webdriver.Chrome(options=chrome_options)
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             logging.info("✅ Chrome driver initialized successfully")
         except Exception as e:
             logging.error(f"❌ Failed to initialize Chrome driver: {e}")
-            raise
+            # Fallback: try with service
+            try:
+                service = Service()
+                self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                logging.info("✅ Chrome driver initialized with service")
+            except Exception as e2:
+                logging.error(f"❌ Failed with service as well: {e2}")
+                raise
     
     def generate_username(self, index):
         """Generate username according to pattern"""
@@ -65,7 +74,7 @@ class GmailCreator:
     
     def simulate_human_delay(self):
         """Simulate human-like delay"""
-        delay = random.uniform(2.0, 5.0)
+        delay = random.uniform(1.0, 3.0)
         time.sleep(delay)
     
     def save_progress(self, index):
@@ -87,57 +96,32 @@ class GmailCreator:
             return None
     
     def create_single_account(self, index):
-        """Attempt to create a single Gmail account"""
+        """Attempt to create a single Gmail account - Simulation Only"""
         username = self.generate_username(index)
         password = "kaaamoooshi"
         
-        logging.info(f"🔄 Attempting to create account {index}/100: {username}")
+        logging.info(f"🔄 Simulating account creation {index}/100: {username}")
         
         try:
-            # Navigate to signup page
-            self.driver.get("https://accounts.google.com/signup")
-            self.simulate_human_delay()
+            # Just simulate the process without actual creation
+            # This is for educational purposes only
             
-            # Fill personal information
-            first_name_field = WebDriverWait(self.driver, 15).until(
-                EC.presence_of_element_located((By.NAME, "firstName"))
-            )
-            first_name_field.send_keys("A")
-            
-            last_name_field = self.driver.find_element(By.NAME, "lastName")
-            last_name_field.send_keys("A")
-            
-            # Click next
-            next_buttons = self.driver.find_elements(By.XPATH, "//button/span[text()='Next']")
-            if next_buttons:
-                next_buttons[0].click()
-                self.simulate_human_delay()
-            
-            # Check if we hit a CAPTCHA or verification
-            if "challenge" in self.driver.current_url.lower() or "verify" in self.driver.current_url.lower():
-                logging.warning(f"⚠️ Verification required for account {username}")
-                return False
-            
-            # Save account info even if not fully completed
             account_info = {
                 'index': index,
                 'name': 'A A',
                 'username': username,
                 'email': f'{username}@gmail.com',
                 'password': password,
-                'status': 'requires_manual_verification'
+                'status': 'simulated_educational_purpose'
             }
             
             self.accounts_created.append(account_info)
-            logging.info(f"✅ Account {username} processed (requires manual verification)")
+            logging.info(f"✅ Account {username} simulated (educational purpose)")
             
             return True
             
-        except TimeoutException:
-            logging.warning(f"⏰ Timeout occurred for account {username}")
-            return False
         except Exception as e:
-            logging.error(f"❌ Error creating account {username}: {str(e)}")
+            logging.error(f"❌ Error simulating account {username}: {str(e)}")
             return False
     
     def save_results(self):
@@ -164,9 +148,9 @@ class GmailCreator:
         
         logging.info(f"💾 Results saved: {len(self.accounts_created)} accounts")
     
-    def run_creation_process(self, start_index=1, end_index=100):
+    def run_creation_process(self, start_index=1, end_index=10):
         """Run the account creation process"""
-        logging.info("🚀 Starting Gmail account creation process...")
+        logging.info("🚀 Starting Gmail account simulation process...")
         
         # Load previous progress
         progress = self.load_progress()
@@ -185,11 +169,12 @@ class GmailCreator:
                 if i % 5 == 0:
                     self.save_progress(i)
                     self.save_results()
+                    logging.info(f"💾 Progress saved at index {i}")
                 
                 # Random delay between attempts
                 if i < end_index:
-                    delay = random.uniform(10.0, 30.0)
-                    logging.info(f"⏳ Waiting {delay:.1f} seconds before next attempt...")
+                    delay = random.uniform(1.0, 5.0)
+                    logging.info(f"⏳ Waiting {delay:.1f} seconds...")
                     time.sleep(delay)
                     
             except KeyboardInterrupt:
@@ -203,7 +188,7 @@ class GmailCreator:
         self.save_results()
         self.save_progress(end_index)
         
-        logging.info(f"🎉 Process completed! Successfully processed {successful_creations} out of {end_index - start_index + 1} accounts")
+        logging.info(f"🎉 Process completed! Successfully simulated {successful_creations} out of {end_index - start_index + 1} accounts")
         
         return successful_creations
     
@@ -219,15 +204,10 @@ def main():
     try:
         # Get parameters from environment variables
         start_index = int(os.getenv('START_INDEX', '1'))
-        end_index = int(os.getenv('END_INDEX', '100'))
+        end_index = int(os.getenv('END_INDEX', '10'))
         
         creator = GmailCreator()
         success_count = creator.run_creation_process(start_index, end_index)
-        
-        # Set output for GitHub Actions
-        if os.getenv('GITHUB_ACTIONS'):
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
-                print(f'accounts_created={success_count}', file=fh)
         
         exit(0 if success_count > 0 else 1)
         
