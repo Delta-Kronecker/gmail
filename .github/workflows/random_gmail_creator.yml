@@ -1,0 +1,64 @@
+name: Random Name Gmail Creator
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_index:
+        description: 'Start index for account creation'
+        required: false
+        default: '1'
+        type: string
+      end_index:
+        description: 'End index for account creation'
+        required: false
+        default: '5'
+        type: string
+
+jobs:
+  create-random-gmail-accounts:
+    name: Create Random Name Gmail Accounts
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install Chrome
+      uses: browser-actions/setup-chrome@v1
+      
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install selenium
+        
+    - name: Run Random Name Gmail Creator
+      env:
+        START_INDEX: ${{ inputs.start_index }}
+        END_INDEX: ${{ inputs.end_index }}
+      run: |
+        python random_name_gmail_creator.py
+        
+    - name: Upload results as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: random-gmail-accounts-results
+        path: |
+          random_gmail_accounts.csv
+          random_gmail_accounts.json
+          random_gmail_creator.log
+          debug_page1.png
+          debug_page2.png
+        retention-days: 7
+        
+    - name: Display summary
+      run: |
+        echo "🎉 Random Name Gmail Account Creation Completed!"
+        if [ -f random_gmail_accounts.csv ]; then
+          echo "Results summary:"
+          tail -n +2 random_gmail_accounts.csv | cut -d',' -f7 | sort | uniq -c
+        fi
