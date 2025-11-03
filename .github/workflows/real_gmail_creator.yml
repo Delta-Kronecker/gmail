@@ -1,4 +1,4 @@
-name: Real Gmail Account Creator
+name: Fixed Gmail Account Creator
 
 on:
   workflow_dispatch:
@@ -11,12 +11,12 @@ on:
       end_index:
         description: 'End index for account creation'
         required: false
-        default: '5'
+        default: '3'
         type: string
 
 jobs:
-  create-real-gmail-accounts:
-    name: Create Real Gmail Accounts
+  create-fixed-gmail-accounts:
+    name: Create Fixed Gmail Accounts
     runs-on: ubuntu-latest
     
     steps:
@@ -36,28 +36,29 @@ jobs:
         python -m pip install --upgrade pip
         pip install selenium
         
-    - name: Run Real Gmail Creator
+    - name: Run Fixed Gmail Creator
       env:
         START_INDEX: ${{ inputs.start_index }}
         END_INDEX: ${{ inputs.end_index }}
       run: |
-        python real_gmail_creator.py
+        python fixed_gmail_creator.py
         
     - name: Upload results as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: real-gmail-accounts-results
+        name: fixed-gmail-accounts-results
         path: |
-          real_gmail_accounts.csv
-          real_gmail_accounts.json
-          real_gmail_creator.log
+          fixed_gmail_accounts.csv
+          fixed_gmail_accounts.json
+          fixed_gmail_creator.log
+          debug_page1.png
+          debug_page2.png
         retention-days: 7
         
     - name: Display summary
       run: |
-        echo "🎉 Real Gmail Account Creation Completed!"
-        echo "Check artifacts for detailed results"
-        if [ -f real_gmail_accounts.csv ]; then
+        echo "🎉 Fixed Gmail Account Creation Completed!"
+        if [ -f fixed_gmail_accounts.csv ]; then
           echo "Results summary:"
-          tail -n +2 real_gmail_accounts.csv | cut -d',' -f6 | sort | uniq -c
+          tail -n +2 fixed_gmail_accounts.csv | cut -d',' -f6 | sort | uniq -c
         fi
